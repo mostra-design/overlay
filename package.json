@@ -1,0 +1,63 @@
+{
+  "name": "@mostra-design/overlay",
+  "version": "0.1.0",
+  "description": "Open-source browser overlay for mostra: pin comments to a live site, run review sessions, see your team live.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mostra-design/overlay.git"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "type": "module",
+  "main": "./dist/mostra.mjs",
+  "module": "./dist/mostra.mjs",
+  "types": "./dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/mostra.mjs"
+    },
+    "./mostra.js": "./dist/script/mostra.js"
+  },
+  "unpkg": "./dist/script/mostra.js",
+  "jsdelivr": "./dist/script/mostra.js",
+  "files": [
+    "dist",
+    "!dist/speech",
+    "!dist/*.gz",
+    "!dist/*.br",
+    "!dist/script/*.gz",
+    "!dist/script/*.br",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "rm -rf dist && node scripts/build-speech.js dist/speech && vite build --mode overlay && vite build && vite build --mode esm && tsc -p tsconfig.build.json && node scripts/finish-script.js",
+    "size": "node scripts/check-size.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.node.json"
+  },
+  "devDependencies": {
+    "@huggingface/transformers": "4.3.2",
+    "@types/node": "^26.6.5",
+    "@types/phoenix": "^1.6.8",
+    "happy-dom": "^21.0.4",
+    "onnxruntime-web": "1.31.0-dev.20260914-8d85527a0",
+    "phoenix": "^1.8.16",
+    "preact": "^11.0.2",
+    "typescript": "^7.0.2",
+    "vite": "^6.4.5",
+    "vitest": "^3.2.7"
+  },
+  "packageManager": "pnpm@10.33.0+sha512.10568bb4a6afb58c9eb3630da90cc9516417abebd3fabbe6739f0ae795728da1491e9db5a544c76ad8eb7570f5c4bb3d6c637b2cb41bfdcdb47fa823c8649319",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  }
+}
