@@ -1,0 +1,65 @@
+name: Watch the live script
+
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  SITE: https://mostra.design/
+
+jobs:
+  compare:
+    name: Compare the live script with this repository
+    runs-on: ubuntu-latest
+    if: ${{ !github.event.repository.private }}
+    steps:
+      - name: Ask the site which commit it's serving
+        id: site
+        run: |
+          if ! getent hosts "$(echo "$SITE" | cut -d/ -f3)" > /dev/null; then
+            echo "::notice::The site has no address yet, so there's nothing to compare."
+            exit 0
+          fi
+          commit=$(curl --fail --silent --show-error "${SITE}release.json" | jq --raw-output .commit)
+          if ! [[ "$commit" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "The site's release.json doesn't name a commit." >&2
+            exit 1
+          fi
+          echo "commit=$commit" >> "$GITHUB_OUTPUT"
+
+      - name: Check out that commit
+        if: steps.site.outputs.commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ steps.site.outputs.commit }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Check the commit is on main
+        if: steps.site.outputs.commit
+        env:
+          COMMIT: ${{ steps.site.outputs.commit }}
+        run: git merge-base --is-ancestor "$COMMIT" origin/main
+
+      - name: Set up pnpm
+        if: steps.site.outputs.commit
+        uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6
+
+      - name: Set up Node
+        if: steps.site.outputs.commit
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: 26.13.0
+          cache: pnpm
+
+      - name: Build
+        if: steps.site.outputs.commit
+        run: pnpm install --frozen-lockfile && pnpm build
+
+      - name: Compare with what the site sends
+        if: steps.site.outputs.commit
+        run: node scripts/check-script.js "$SITE"

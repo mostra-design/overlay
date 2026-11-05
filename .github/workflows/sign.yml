@@ -1,0 +1,38 @@
+name: Sign
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  build:
+    name: Build
+    if: ${{ !github.event.repository.private && github.ref == 'refs/heads/main' }}
+    permissions:
+      contents: read
+    uses: ./.github/workflows/build-script.yml
+
+  sign:
+    name: Sign
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      attestations: write
+    steps:
+      - name: Fetch the files
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          name: release
+          path: release
+
+      - name: Sign the files
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4
+        with:
+          subject-path: |
+            release/mostra*.js
+            release/overlay-*.js

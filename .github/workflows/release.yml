@@ -1,0 +1,68 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions: {}
+
+jobs:
+  build:
+    name: Build
+    if: ${{ !github.event.repository.private }}
+    permissions:
+      contents: read
+    uses: ./.github/workflows/build-script.yml
+
+  publish:
+    name: Sign and publish
+    needs: build
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    steps:
+      - name: Check the tagged commit is on main
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          status=$(gh api "repos/$GITHUB_REPOSITORY/compare/main...$GITHUB_SHA" --jq .status)
+          if [ "$status" != "identical" ] && [ "$status" != "behind" ]; then
+            echo "The tagged commit isn't on main (GitHub says it is $status). Tag a commit from main." >&2
+            exit 1
+          fi
+
+      - name: Fetch the files
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          name: release
+          path: release
+
+      - name: Sign the files
+        id: signature
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4
+        with:
+          subject-path: |
+            release/mostra*.js
+            release/overlay-*.js
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SIGNATURE: ${{ steps.signature.outputs.bundle-path }}
+        run: |
+          cp "$SIGNATURE" release/signature.sigstore.json
+          gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --generate-notes \
+            release/mostra*.js release/overlay-*.js release/release.json release/signature.sigstore.json
+
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: 26.13.0
+          registry-url: https://registry.npmjs.org
+
+      - name: Publish to npm
+        run: npx --yes npm@11.6.2 publish ./release/*.tgz --ignore-scripts
