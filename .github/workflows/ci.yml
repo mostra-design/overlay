@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }} # Groups workflows by branch
+  cancel-in-progress: true # Cancels previous runs when a new one starts
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6
+
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: 26.13.0
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check types
+        run: pnpm typecheck
+
+      - name: Run tests
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
+
+      - name: Check the loader's size
+        run: pnpm size
+
+      - name: Check the served files
+        run: node scripts/check-script.js dist/script dist/speech
+
+      - name: Check another build makes the same bytes
+        run: |
+          elsewhere="$RUNNER_TEMP/somewhere/else/browser"
+          mkdir -p "$(dirname "$elsewhere")"
+          cp -r . "$elsewhere"
+          (cd "$elsewhere" && pnpm build)
+          diff -r dist/script "$elsewhere/dist/script"
