@@ -7,7 +7,7 @@ Get feedback on your real running site, not on a Figma prototype or a Loom recor
 
 This repository is the part of [mostra](https://mostra.design) that runs on your site: the script you add, and everything an invited reviewer sees on it. The comments live in your project on mostra.design.
 
-<!-- The promo video: a github.com/user-attachments URL on its own line plays here. -->
+https://github.com/user-attachments/assets/e4b09369-23a5-4e82-aaf5-ef3f44f0d1b5
 
 ## How it works
 
