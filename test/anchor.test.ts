@@ -437,6 +437,8 @@ describe('describeElement', () => {
     expect(label(`<div role="switch">Dark mode</div>`, '[role="switch"]')).toBe("'Dark mode' switch")
     expect(label(`<div role="dialog" aria-label="Invite people"><p>Hi</p></div>`, '[role="dialog"]')).toBe("'Invite people' dialog")
     expect(label(`<input type="submit" value="Sign up">`, 'input')).toBe("'Sign up' button")
+    expect(label(`<iframe title="Embedded chart" srcdoc="<p>Chart</p>"></iframe>`, 'iframe')).toBe("'Embedded chart' frame")
+    expect(label(`<iframe src="about:blank"></iframe>`, 'iframe')).toBe('Frame')
   })
 
   it('names form fields by their label or placeholder, never their value', () => {

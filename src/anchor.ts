@@ -58,6 +58,7 @@ const NOUNS: Record<string, string> = {
   region: 'section',
   banner: 'header',
   contentinfo: 'footer',
+  frame: 'frame',
   main: 'main content',
   list: 'list',
   table: 'table',
@@ -315,6 +316,8 @@ function roleOf(element: Element): string | null {
       return 'graphics'
     case 'input':
       return inputRole(element.getAttribute('type')?.toLowerCase() ?? 'text')
+    case 'iframe':
+      return 'frame'
     case 'textarea':
       return 'textbox'
     case 'select':
@@ -368,6 +371,7 @@ function accessibleName(element: Element, role: string | null): string {
     return printed || (type === 'submit' ? 'Submit' : type === 'reset' ? 'Reset' : '')
   }
   if (role === 'img' || role === 'image') return collapse(element.getAttribute('alt')) || collapse(element.getAttribute('title'))
+  if (role === 'frame') return collapse(element.getAttribute('title'))
   if (role === 'graphics') {
     const title = Array.from(element.children).find((child) => child.localName === 'title')
     return collapse(title?.textContent) || collapse(element.getAttribute('title'))
