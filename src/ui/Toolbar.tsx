@@ -390,7 +390,7 @@ function ToolbarMenu({ builder }: { builder: boolean }) {
           class="name-form"
           onSubmit={(event) => {
             event.preventDefault()
-            if (name.trim()) void controller.setName(name).then(() => setNaming(false))
+            if (name.trim()) void controller.setName(name).then(() => setNaming(false), () => {})
           }}
         >
           <label class="field">

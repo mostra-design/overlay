@@ -456,12 +456,13 @@ export function createController(options: ControllerOptions) {
     }
   }
 
-  async function send<Reply>(event: string, payload: object, failure: string): Promise<Reply> {
+  async function send<Reply>(event: string, payload: object, failure: string | ((error: unknown) => string)): Promise<Reply> {
     try {
       return await request<Reply>(channel, event, payload)
     } catch (error) {
       const reason = error instanceof RequestError ? error.reason : ''
-      notify(store.get().connection === 'online' || !RETRYABLE.has(reason) ? failure : "You're offline. Try again when you're back.", 'error')
+      const message = typeof failure === 'string' ? failure : failure(error)
+      notify(store.get().connection === 'online' || !RETRYABLE.has(reason) ? message : "You're offline. Try again when you're back.", 'error')
       throw error
     }
   }
@@ -806,7 +807,7 @@ export function createController(options: ControllerOptions) {
     },
 
     async setName(name: string) {
-      const { reviewer } = await send<{ reviewer: Person }>('reviewer:update', { display_name: name.trim() }, "Couldn't save your name.")
+      const { reviewer } = await send<{ reviewer: Person }>('reviewer:update', { display_name: name.trim() }, nameRefusal)
       store.update({ me: reviewer })
     },
 
@@ -949,6 +950,11 @@ export function targetKey(pageUrl: string, anchor: Anchor | null): string {
   if (!anchor) return `page:${pageUrl}`
   const selector = anchor.text_quote ? `quote:${anchor.text_quote.exact}` : JSON.stringify(anchor.selectors[0] ?? null)
   return `element:${pageUrl}:${selector}`
+}
+
+function nameRefusal(error: unknown): string {
+  const taken = error instanceof RequestError && (error.errors.display_name ?? []).some((message) => message.startsWith('is taken'))
+  return taken ? 'Someone here already uses that name. Add an initial.' : "Couldn't save your name."
 }
 
 function keepsAcrossPages(card: Card, comments: CommentMap): boolean {

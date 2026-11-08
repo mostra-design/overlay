@@ -344,7 +344,7 @@ function ReplyBox({ thread, me }: { thread: Comment; me: Person }) {
   const ready = body.trim().length > 0 && (!needsName || name.trim().length > 0)
   const send = () => {
     if (!ready) return
-    void controller.reply(thread, body.trim(), team ? 'team' : 'everyone', needsName ? name.trim() : null)
+    void controller.reply(thread, body.trim(), team ? 'team' : 'everyone', needsName ? name.trim() : null).catch(() => {})
   }
   return (
     <div class="reply-box">

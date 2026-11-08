@@ -36,7 +36,7 @@ export function Composer({ card }: { card: ComposerCard }) {
 
   const send = () => {
     if (!ready) return
-    void controller.createComment({ body: body.trim(), suggestedText: suggestion, visibility: team ? 'team' : 'everyone', name: needsName ? name.trim() : null })
+    void controller.createComment({ body: body.trim(), suggestedText: suggestion, visibility: team ? 'team' : 'everyone', name: needsName ? name.trim() : null }).catch(() => {})
   }
   const walk = (next: Element | null, trail: Element[]) => {
     if (next) controller.retarget(next, trail)

@@ -471,6 +471,30 @@ describe('sending', () => {
     expect(controller.store.get().me?.display_name).toBe('Sam')
   })
 
+  it('says when a name is taken, and sends nothing', async () => {
+    const guest = { ...maya, display_name: null }
+    const { controller, fake, join } = setup()
+    await join({ reviewer: guest })
+    pickSomething(controller)
+    const draftKey = (controller.store.get().card as { draftKey: string }).draftKey
+    controller.drafts.set(draftKey, 'Hi')
+    fake.respond('reviewer:update', () => ({ status: 'error', response: { reason: 'invalid', errors: { display_name: ['is taken. Use your own name.'] } } }))
+    await expect(controller.createComment({ body: 'Hi', suggestedText: null, visibility: 'everyone', name: 'Maya' })).rejects.toThrow()
+    expect(controller.store.get().toasts.at(-1)?.message).toBe('Someone here already uses that name. Add an initial.')
+    expect(fake.pushes.some((push) => push.event === 'comment:create')).toBe(false)
+    expect(controller.drafts.get(draftKey)).toBe('Hi')
+    expect(controller.store.get().me?.display_name).toBe(null)
+  })
+
+  it("says only that a name wasn't saved when it's refused for another reason", async () => {
+    const guest = { ...maya, display_name: null }
+    const { controller, fake, join } = setup()
+    await join({ reviewer: guest })
+    fake.respond('reviewer:update', () => ({ status: 'error', response: { reason: 'invalid', errors: { display_name: ["can't be blank"] } } }))
+    await expect(controller.setName(' ')).rejects.toThrow()
+    expect(controller.store.get().toasts.at(-1)?.message).toBe("Couldn't save your name.")
+  })
+
   it('replies with only the parent, the body and a client id', async () => {
     const thread = makeComment({ page_url: '/pricing' })
     const { controller, fake, join } = setup()
