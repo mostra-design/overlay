@@ -688,7 +688,8 @@ export function createController(options: ControllerOptions) {
       if (card?.type !== 'composer' || !me) return
       if (input.name && !me.display_name) await actions.setName(input.name)
       const targetAnchor = card.target.kind === 'page' ? null : card.target.anchor
-      const suggested = card.target.kind === 'selection' && input.suggestedText !== null ? { old_text: card.target.anchor.text_quote?.exact ?? '', new_text: input.suggestedText } : null
+      const oldText = card.target.kind === 'selection' ? (card.target.anchor.text_quote?.exact ?? '') : ''
+      const suggested = card.target.kind === 'selection' && input.suggestedText !== null && input.suggestedText.trim() !== '' && input.suggestedText.trim() !== oldText.trim() ? { old_text: oldText, new_text: input.suggestedText } : null
       const optimistic = optimisticComment({
         body: input.body,
         visibility: input.visibility,

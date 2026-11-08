@@ -414,6 +414,30 @@ describe('sending', () => {
     controller.pick(document.querySelector('button')!, { x: 1, y: 1 })
   }
 
+  it('sends a suggestion only when it changes the selected words', async () => {
+    const { controller, fake, join } = setup()
+    await join()
+    fake.respond('comment:create', (payload) => ({ comment: { ...makeComment({ number: 40, author: maya }), client_id: payload.client_id } }))
+    const select = () => {
+      document.body.innerHTML = '<p>Every plan includes unlimited dashboards.</p>'
+      const range = document.createRange()
+      const text = document.querySelector('p')!.firstChild!
+      range.setStart(text, 20)
+      range.setEnd(text, 40)
+      controller.pickSelection(range)
+    }
+    const sentSuggestions = () => fake.pushes.filter((push) => push.event === 'comment:create').map((push) => push.payload.suggested_text ?? null)
+
+    select()
+    await controller.createComment({ body: 'Same words', suggestedText: 'unlimited dashboards', visibility: 'everyone', name: null })
+    select()
+    await controller.createComment({ body: 'Blank', suggestedText: '   ', visibility: 'everyone', name: null })
+    select()
+    await controller.createComment({ body: 'New words', suggestedText: 'unlimited dashboards and viewers', visibility: 'everyone', name: null })
+
+    expect(sentSuggestions()).toEqual([null, null, { old_text: 'unlimited dashboards', new_text: 'unlimited dashboards and viewers' }])
+  })
+
   it('publishes at once with a client id; the pin shows "sending" until the number comes back', async () => {
     const { controller, fake, join } = setup()
     await join()
