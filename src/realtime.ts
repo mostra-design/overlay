@@ -50,6 +50,12 @@ export function connectRealtime(options: RealtimeOptions): Connection {
 
   socket.onError(() => setStatus('offline'))
   channel.onError(() => setStatus('offline'))
+  const wentOffline = () => setStatus('offline')
+  const cameBack = () => {
+    if (socket.isConnected() && channel.state === 'joined') setStatus('online')
+  }
+  window.addEventListener('offline', wentOffline)
+  window.addEventListener('online', cameBack)
   channel
     .join()
     .receive('ok', (reply: JoinReply) => {
@@ -77,6 +83,8 @@ export function connectRealtime(options: RealtimeOptions): Connection {
     if (closed) return
     closed = true
     clearTimeout(waiting)
+    window.removeEventListener('offline', wentOffline)
+    window.removeEventListener('online', cameBack)
     channel.leave()
     socket.disconnect()
   }

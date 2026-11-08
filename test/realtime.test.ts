@@ -33,6 +33,9 @@ const phoenix = vi.hoisted(() => {
     disconnect() {
       this.connected = false
     }
+    isConnected() {
+      return this.connected
+    }
     channel(topic: string, params: () => object) {
       const hooks = new Map<string, (response: any) => void>()
       const joinPush = {
@@ -168,6 +171,31 @@ describe('connectRealtime', () => {
       vi.advanceTimersByTime(66_001)
       expect(phoenix.state.socket.connected).toBe(false)
     })
+  })
+
+  it('says offline as soon as the browser loses the network, and online once it is back and still joined', () => {
+    const { connection, statuses } = connect()
+    phoenix.state.channel.hooks.get('ok')(joinReply())
+    phoenix.state.channel.state = 'joined'
+
+    window.dispatchEvent(new Event('offline'))
+    expect(statuses).toHaveBeenLastCalledWith('offline')
+    window.dispatchEvent(new Event('online'))
+    expect(statuses).toHaveBeenLastCalledWith('online')
+
+    connection.disconnect()
+    statuses.mockClear()
+    window.dispatchEvent(new Event('offline'))
+    expect(statuses).not.toHaveBeenCalled()
+  })
+
+  it('stays offline when the network is back but the socket is not, until it rejoins', () => {
+    const { statuses } = connect()
+    phoenix.state.channel.hooks.get('ok')(joinReply())
+    window.dispatchEvent(new Event('offline'))
+    phoenix.state.socket.connected = false
+    window.dispatchEvent(new Event('online'))
+    expect(statuses).toHaveBeenLastCalledWith('offline')
   })
 
   it('reports socket trouble as offline and keeps reconnecting: an unreachable server is not a refusal', () => {
