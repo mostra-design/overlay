@@ -382,6 +382,8 @@ select.input, .person-filter { appearance: auto; }
 
 @media (pointer: coarse) {
   .pin::before { content: ''; position: absolute; left: 50%; top: 50%; width: var(--size-target); height: var(--size-target); transform: translate(-50%, -50%); }
+  .chip-button { position: relative; }
+  .tool::before, .chip-button::before { content: ''; position: absolute; left: 50%; top: 50%; width: max(100%, var(--size-target)); height: max(100%, var(--size-target)); transform: translate(-50%, -50%); }
   .input, .input.compose, .reply-box .input { font-size: var(--text-16); }
 }
 
