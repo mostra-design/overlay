@@ -178,7 +178,8 @@ export function Marks() {
     return { ...pin, shape, bounds, peek, face: onScreen(shape.face, pin.placement.origin), box: onScreen(shape.outline, pin.placement.origin) }
   })
   const showing = (pin: DrawnPin) => pin.peek !== null && peeking.includes(pin.comment.id)
-  const clusters = [...clusterPins(pins.filter((pin) => !showing(pin)).map((pin): PinBox => ({ id: pin.comment.id, ...pin.box })), CLUSTER_DISTANCE), ...pins.filter(showing).map((pin) => ({ ids: [pin.comment.id], box: pin.box }))]
+  const alone = (pin: DrawnPin) => showing(pin) || (card?.type === 'thread' && card.id === pin.comment.id)
+  const clusters = [...clusterPins(pins.filter((pin) => !alone(pin)).map((pin): PinBox => ({ id: pin.comment.id, ...pin.box })), CLUSTER_DISTANCE), ...pins.filter(alone).map((pin) => ({ ids: [pin.comment.id], box: pin.box }))]
   const openWords = pins.filter(showing).map((pin) => wordsBox(pin.face, pin.peek!))
   const tucked = (pin: DrawnPin) => !showing(pin) && openWords.some((box) => intersects(box, pin.face))
   const byId = new Map(pins.map((pin) => [pin.comment.id, pin]))
