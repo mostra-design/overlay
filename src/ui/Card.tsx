@@ -163,9 +163,12 @@ function useCardSurface() {
   return [ref, cardRef] as const
 }
 
-function fullSize(card: HTMLElement): Size {
-  const body = card.querySelector('.card-body')
-  return { width: card.offsetWidth, height: card.offsetHeight + (body ? body.scrollHeight - body.clientHeight : 0) }
+function naturalSize(card: HTMLElement): Size {
+  const cap = card.style.maxHeight
+  card.style.maxHeight = 'none'
+  const size = { width: card.offsetWidth, height: card.offsetHeight }
+  card.style.maxHeight = cap
+  return size
 }
 
 function Floating({ subject, docked, lit, children }: { subject: Subject | null; docked: boolean; lit: string | null; children: ComponentChildren }) {
@@ -194,14 +197,15 @@ function Floating({ subject, docked, lit, children }: { subject: Subject | null;
   useLayoutEffect(() => {
     const element = ref.current
     if (!element || placement.kind === 'stub') return
+    const resizes = typeof ResizeObserver === 'function' ? new ResizeObserver(() => measure()) : null
+    const edits = typeof MutationObserver === 'function' ? new MutationObserver(() => measure()) : null
     const measure = () => {
-      const { width, height } = fullSize(element)
+      const { width, height } = naturalSize(element)
+      edits?.takeRecords()
       setSize((current) => (Math.abs(width - current.width) > 1 || Math.abs(height - current.height) > 1 ? { width, height } : current))
     }
     measure()
-    const resizes = typeof ResizeObserver === 'function' ? new ResizeObserver(measure) : null
     resizes?.observe(element)
-    const edits = typeof MutationObserver === 'function' ? new MutationObserver(measure) : null
     edits?.observe(element, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ['style', 'open'] })
     return () => {
       resizes?.disconnect()
