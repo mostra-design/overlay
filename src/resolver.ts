@@ -16,8 +16,10 @@ const SELECTOR_LIMIT = 8
 const WEIGHTS = { testid: 6, id: 5, css: 3, text: 3, tag: 1, elementText: 4, quote: 2, distance: 0.5 }
 const THRESHOLD_WITH_TEXT = 4
 const THRESHOLD_WITHOUT_TEXT = 3
+const DISTINCT_TEXT_LENGTH = 12
+const NEAR_SHARE = 0.25
 
-type Candidate = { element: Element; score: number; range: Range | null }
+type Candidate = { element: Element; score: number; range: Range | null; structural: boolean; distance: number | null }
 
 export function resolveAnchor(anchor: Anchor, document: Document, readText = true): Resolved | null {
   try {
@@ -34,14 +36,16 @@ export function readsPageText(anchor: Anchor): boolean {
 function bestMatch(anchor: Anchor, document: Document, readText: boolean): Resolved | null {
   if (!readText && anchor.text_quote) return null
   const candidates = new Map<Element, Candidate>()
-  const vote = (element: Element, points: number) => {
+  const vote = (element: Element, points: number, structural: boolean) => {
     const known = candidates.get(element)
-    if (known) known.score += points
-    else if (candidates.size < CANDIDATE_LIMIT) candidates.set(element, { element, score: points, range: null })
+    if (known) {
+      known.score += points
+      known.structural ||= structural
+    } else if (candidates.size < CANDIDATE_LIMIT) candidates.set(element, { element, score: points, range: null, structural, distance: null })
   }
 
   for (const selector of selectorsToTry(anchor.selectors)) {
-    if (readText || selector.type !== 'text') for (const [element, points] of proposals(selector, document, anchor)) vote(element, points)
+    if (readText || selector.type !== 'text') for (const [element, points] of proposals(selector, document, anchor)) vote(element, points, selector.type !== 'text')
   }
   if (candidates.size === 0) return null
 
@@ -61,6 +65,7 @@ function bestMatch(anchor: Anchor, document: Document, readText: boolean): Resol
     if (center && isRendered(element)) {
       const box = element.getBoundingClientRect()
       const distance = Math.hypot(box.left + (view?.scrollX ?? 0) + box.width / 2 - center.x, box.top + (view?.scrollY ?? 0) + box.height / 2 - center.y)
+      candidate.distance = distance
       candidate.score += WEIGHTS.distance * Math.max(0, 1 - distance / diagonal)
     }
   }
@@ -74,8 +79,10 @@ function bestMatch(anchor: Anchor, document: Document, readText: boolean): Resol
   }
 
   const threshold = recordedText ? THRESHOLD_WITH_TEXT : THRESHOLD_WITHOUT_TEXT
+  const distinct = recordedText.length >= DISTINCT_TEXT_LENGTH
+  const trusted = (candidate: Candidate) => !center || distinct || candidate.structural || candidate.range !== null || (candidate.distance !== null && candidate.distance <= diagonal * NEAR_SHARE)
   const ranked = Array.from(candidates.values())
-    .filter((candidate) => candidate.score >= threshold)
+    .filter((candidate) => candidate.score >= threshold && trusted(candidate))
     .map((candidate) => ({ candidate, rendered: isRendered(candidate.element) }))
     .sort((first, second) => Number(second.rendered) - Number(first.rendered) || second.candidate.score - first.candidate.score || deeperFirst(first.candidate.element, second.candidate.element))
   const best = ranked[0]?.candidate

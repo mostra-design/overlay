@@ -100,6 +100,26 @@ describe('resolveAnchor', () => {
     expect(resolved(anchor)).toBe(second)
   })
 
+  it('does not move a short label onto the same words far away once its element is gone', () => {
+    document.body.innerHTML = `<aside><span class="me">JD</span></aside><table><tr><td><span class="owner">JD</span></td></tr></table>`
+    layout(query('.me'), box(20, 820, 30, 30))
+    layout(query('.owner'), box(600, 280, 30, 30))
+    const anchor = createAnchor(query('.owner'), null)
+    query('table').remove()
+
+    expect(resolved(anchor)).toBeNull()
+  })
+
+  it('still finds a short label that moved a little', () => {
+    document.body.innerHTML = `<table><tr><td><span class="owner">JD</span></td></tr></table>`
+    layout(query('.owner'), box(600, 280, 30, 30))
+    const anchor = createAnchor(query('.owner'), null)
+    document.body.innerHTML = `<div class="row"><span class="initials">JD</span></div>`
+    layout(query('.initials'), box(620, 300, 30, 30))
+
+    expect(resolved(anchor)).toBe(query('.initials'))
+  })
+
   it('prefers a rendered match over a hidden one with stronger selectors', () => {
     document.body.innerHTML = `<nav class="desktop"><a data-testid="nav-pricing">Pricing</a></nav><nav class="mobile"><a>Pricing</a></nav>`
     const hidden = query('.desktop a')
