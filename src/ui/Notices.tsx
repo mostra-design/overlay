@@ -1,4 +1,6 @@
 import { useEffect } from 'preact/hooks'
+import { legalUrls } from '../config'
+import type { Transcription } from '../protocol'
 import { useController, useMostraState } from './hooks'
 import { useLayout } from './layout'
 import { CloseButton } from './primitives'
@@ -31,9 +33,33 @@ export function WelcomeCard() {
             Start
           </button>
         </div>
+        <LegalNote />
       </div>
     </>
   )
+}
+
+export function LegalNote() {
+  const talkTranscription = useMostraState((state) => state.talkTranscription)
+  return (
+    <p class="fine">
+      By giving feedback you agree to mostra's{' '}
+      <a href={legalUrls.terms} target="_blank" rel="noopener">
+        Terms
+      </a>
+      . The{' '}
+      <a href={legalUrls.privacy} target="_blank" rel="noopener">
+        Privacy Policy
+      </a>{' '}
+      says what happens to your feedback.{voiceNote(talkTranscription)}
+    </p>
+  )
+}
+
+function voiceNote(transcription: Transcription | null): string {
+  if (transcription === 'browser') return " Talk uses your browser's speech recognition, which may send your voice to the browser's maker."
+  if (transcription === 'smart') return ' Talk sends your voice to a speech-to-text service.'
+  return ''
 }
 
 export function CatchUpCard() {

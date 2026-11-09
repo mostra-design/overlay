@@ -548,6 +548,9 @@ select.input, .person-filter { appearance: auto; }
 .display.small { font-size: var(--text-20); }
 .lede { font-size: var(--text-14); color: var(--color-ink-muted); line-height: var(--leading-normal); text-wrap: pretty; }
 .eyebrow { font-family: var(--font-mono); font-size: var(--text-12); color: var(--color-ink-muted); }
+.fine { font-size: var(--text-12); color: var(--color-ink-muted); line-height: var(--leading-normal); text-wrap: pretty; }
+.fine a { color: inherit; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--color-rule-strong); }
+.fine a:hover { text-decoration-color: currentColor; }
 .quote {
   padding: 2px 0 2px var(--space-3);
   border-left: 2px solid var(--color-ink);

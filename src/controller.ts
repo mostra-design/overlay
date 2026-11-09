@@ -21,6 +21,7 @@ import {
   type Project,
   type Rejection,
   type TalkStatus,
+  type Transcription,
   type Verdict,
   type VerdictValue,
   type Version,
@@ -87,6 +88,7 @@ export type MostraState = {
   focus: { id: string; nonce: number } | null
   announcement: { text: string; nonce: number } | null
   talkStatus: TalkStatus | null
+  talkTranscription: Transcription | null
   talk: TalkState | null
   arrivals: ReadonlySet<string>
 }
@@ -154,6 +156,7 @@ export function createController(options: ControllerOptions) {
     focus: null,
     announcement: null,
     talkStatus: null,
+    talkTranscription: null,
     talk: null,
     arrivals: new Set(),
   })
@@ -238,6 +241,7 @@ export function createController(options: ControllerOptions) {
     const pageUrl = joinedPageUrl
     requestedPageUrl = pageUrl
     const first = !joined
+    const transcription = reply.talk ? (options.talk?.pick(reply.talk.transcribers) ?? null) : null
     store.update((state) => ({
       me: reply.reviewer,
       project: reply.project,
@@ -250,7 +254,8 @@ export function createController(options: ControllerOptions) {
             catchUp: reply.catch_up,
             invite: reply.invite,
             card: firstCard(reply),
-            talkStatus: reply.talk && options.talk?.pick(reply.talk.transcribers) ? reply.talk : null,
+            talkStatus: transcription ? reply.talk : null,
+            talkTranscription: transcription,
           }
         : {}),
     }))

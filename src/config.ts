@@ -29,6 +29,8 @@ export function overlayUrl(scriptSrc: string, overlayFile: string): string {
   return new URL(overlayFile, scriptSrc).href
 }
 
+export const legalUrls = { terms: 'https://mostra.design/terms', privacy: 'https://mostra.design/privacy#reviewers' }
+
 export function socketUrl(endpoint: string): string {
   return `${endpoint.replace(/^http/, 'ws')}/socket`
 }

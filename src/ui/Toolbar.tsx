@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks'
+import { legalUrls } from '../config'
 import { displayName, isUnresolved, presenceWords } from '../lifecycle'
 import type { Rect, Size } from '../placement'
 import type { TalkState } from '../talk'
@@ -449,6 +450,9 @@ function ToolbarMenu({ builder }: { builder: boolean }) {
           Open dashboard
         </a>
       )}
+      <a role="menuitem" class="menu-item" href={legalUrls.terms} target="_blank" rel="noopener" onClick={close}>
+        Terms and privacy
+      </a>
       <span class="menu-rule" aria-hidden="true" />
       <button type="button" role="menuitem" class="menu-item" onClick={() => controller.stopReviewing()}>
         Stop reviewing on this device

@@ -678,6 +678,21 @@ describe('talking', () => {
     expect(on.controller.store.get().talkStatus?.minutes_left).toBe(30)
   })
 
+  it('remembers which way this browser will turn speech into text', async () => {
+    const backend = { pick: (transcribers: string[]) => (transcribers.includes('local') ? ('local' as const) : null), record: vi.fn(), submit: vi.fn(), forget: vi.fn() }
+    const on = setup({ talk: backend })
+    await on.join({ talk: { ...talkStatus, transcribers: ['browser', 'local'] } })
+    expect(on.controller.store.get().talkTranscription).toBe('local')
+
+    const cantDoIt = setup({ talk: backend })
+    await cantDoIt.join({ talk: talkStatus })
+    expect(cantDoIt.controller.store.get().talkTranscription).toBeNull()
+
+    const offOnServer = setup({ talk: backend })
+    await offOnServer.join({ talk: null })
+    expect(offOnServer.controller.store.get().talkTranscription).toBeNull()
+  })
+
   it('says a played example is one, and never that it is recording', async () => {
     const record = vi.fn(async () => ({ stop: async () => {}, example: true }))
     const { controller, join } = setup({ talk: { pick: () => 'browser', record, submit: vi.fn(), forget: vi.fn() } })
