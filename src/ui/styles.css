@@ -852,7 +852,7 @@ mark { background: var(--color-mark-wash); color: var(--color-mark-ink); padding
     max-width: calc(100vw - var(--space-4));
     padding: 0 var(--space-1);
   }
-  .toolbar.away { transform: translate(-50%, calc(100% + var(--space-6))); }
+  .toolbar.away { transform: translate(-50%, calc(100% + var(--space-6))); opacity: 0; pointer-events: none; }
   .toolbar .page-pins { top: auto; bottom: 100%; left: auto; right: 0; margin: 0 0 var(--space-2); transform: none; }
   .toolbar.moded { width: calc(100vw - var(--space-4)); }
   .toolbar .mode { flex: 1; justify-content: center; flex-wrap: nowrap; font-size: var(--text-13); }
